@@ -355,7 +355,7 @@ rb_MD5_Finish(MD5_CTX *pms, uint8_t *digest)
  * most of this code is from the ruby internal ext/digest/md5/md5.c and md5init.c
  */
 /* digest.h */
-#define RUBY_DIGEST_API_VERSION 2
+#define RUBY_DIGEST_API_VERSION 3
 
 typedef void (*rb_digest_hash_init_func_t)(void *);
 typedef void (*rb_digest_hash_update_func_t)(void *, unsigned char *, size_t);
