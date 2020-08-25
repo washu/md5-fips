@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.extensions << 'ext/extconf.rb'
 
   s.has_rdoc = false
-  s.homepage = 'http://github.com/taf2/md5-partial/tree/master'
+  s.homepage = 'http://github.com/washu/md5-partial/tree/master'
   s.rdoc_options = ['--main', 'README']
 
   s.platform = Gem::Platform::RUBY
