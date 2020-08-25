@@ -15,7 +15,6 @@ Gem::Specification.new do |s|
   s.test_files = ["test/test.rb"]
   s.extensions << 'ext/extconf.rb'
 
-  s.has_rdoc = false
   s.homepage = 'http://github.com/washu/md5-partial/tree/master'
   s.rdoc_options = ['--main', 'README']
 
