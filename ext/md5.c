@@ -393,14 +393,11 @@ static const rb_digest_metadata_t md5_fips = {
 void
 Init_md5fips()
 {
-  VALUE mDigest, cDigest_Base, cDigest_MD5, cDigest_OMD5;
+  VALUE mDigest, cDigest_Base, cDigest_MD5;
 
   rb_require("digest");
-  rb_require("digest/md5");
   mDigest = rb_path2class("Digest");
   cDigest_Base = rb_path2class("Digest::Base");
   cDigest_MD5 = rb_define_class_under(mDigest, "MD5Fips", cDigest_Base);
   rb_ivar_set(cDigest_MD5, rb_intern("metadata"),Data_Wrap_Struct(rb_cObject, 0, 0, (void *)&md5_fips));
-  cDigest_OMD5 = rb_path2class("Digest::MD5");
-  rb_ivar_set(cDigest_OMD5, rb_intern("metadata"),Data_Wrap_Struct(rb_cObject, 0, 0, (void *)&md5_fips));
 }
