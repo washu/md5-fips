@@ -126,7 +126,7 @@
 
 
 static void
-md5_process(MD5_CTX *pms, const uint8_t *data /*[64]*/)
+md5_fips_process(MD5_FIPS_CTX *pms, const uint8_t *data /*[64]*/)
 {
     uint32_t
 	a = pms->state[0], b = pms->state[1],
@@ -280,18 +280,19 @@ md5_process(MD5_CTX *pms, const uint8_t *data /*[64]*/)
     pms->state[3] += d;
 }
 
-void
-rb_MD5_Init(MD5_CTX *pms)
+int
+rb_MD5_Fips_Init(MD5_FIPS_CTX *pms)
 {
     pms->count[0] = pms->count[1] = 0;
     pms->state[0] = 0x67452301;
     pms->state[1] = /*0xefcdab89*/ T_MASK ^ 0x10325476;
     pms->state[2] = /*0x98badcfe*/ T_MASK ^ 0x67452301;
     pms->state[3] = 0x10325476;
+    return 1;
 }
 
 void
-rb_MD5_Update(MD5_CTX *pms, const uint8_t *data, size_t nbytes)
+rb_MD5_Fips_Update(MD5_FIPS_CTX *pms, const uint8_t *data, size_t nbytes)
 {
     const uint8_t *p = data;
     size_t left = nbytes;
@@ -316,20 +317,20 @@ rb_MD5_Update(MD5_CTX *pms, const uint8_t *data, size_t nbytes)
 	    return;
 	p += copy;
 	left -= copy;
-	md5_process(pms, pms->buffer);
+	md5_fips_process(pms, pms->buffer);
     }
 
     /* Process full blocks. */
     for (; left >= 64; p += 64, left -= 64)
-	md5_process(pms, p);
+	md5_fips_process(pms, p);
 
     /* Process a final partial block. */
     if (left)
 	memcpy(pms->buffer, p, left);
 }
 
-void
-rb_MD5_Finish(MD5_CTX *pms, uint8_t *digest)
+int
+rb_MD5_Fips_Finish(MD5_FIPS_CTX *pms, uint8_t *digest)
 {
     static const uint8_t pad[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -344,11 +345,12 @@ rb_MD5_Finish(MD5_CTX *pms, uint8_t *digest)
     for (i = 0; i < 8; ++i)
 	data[i] = (uint8_t)(pms->count[i >> 2] >> ((i & 3) << 3));
     /* Pad to 56 bytes mod 64. */
-    rb_MD5_Update(pms, pad, ((55 - (pms->count[0] >> 3)) & 63) + 1);
+    rb_MD5_Fips_Update(pms, pad, ((55 - (pms->count[0] >> 3)) & 63) + 1);
     /* Append the length. */
-    rb_MD5_Update(pms, data, 8);
+    rb_MD5_Fips_Update(pms, data, 8);
     for (i = 0; i < 16; ++i)
 	digest[i] = (uint8_t)(pms->state[i >> 2] >> ((i & 3) << 3));
+	return 1;
 }
 
 /*
@@ -357,9 +359,9 @@ rb_MD5_Finish(MD5_CTX *pms, uint8_t *digest)
 /* digest.h */
 #define RUBY_DIGEST_API_VERSION 3
 
-typedef void (*rb_digest_hash_init_func_t)(void *);
+typedef int (*rb_digest_hash_init_func_t)(void *);
 typedef void (*rb_digest_hash_update_func_t)(void *, unsigned char *, size_t);
-typedef void (*rb_digest_hash_finish_func_t)(void *, unsigned char *);
+typedef int (*rb_digest_hash_finish_func_t)(void *, unsigned char *);
 
 typedef struct {
     int api_version;
@@ -373,40 +375,15 @@ typedef struct {
 
 /* md5.c */
 
-static const rb_digest_metadata_t md5 = {
+static const rb_digest_metadata_t md5_fips = {
     RUBY_DIGEST_API_VERSION,
-    MD5_DIGEST_LENGTH,
-    MD5_BLOCK_LENGTH,
-    sizeof(MD5_CTX),
-    (rb_digest_hash_init_func_t)rb_MD5_Init,
-    (rb_digest_hash_update_func_t)rb_MD5_Update,
-    (rb_digest_hash_finish_func_t)rb_MD5_Finish,
+    MD5_FIPS_DIGEST_LENGTH,
+    MD5_FIPS_BLOCK_LENGTH,
+    sizeof(MD5_FIPS_CTX),
+    (rb_digest_hash_init_func_t)rb_MD5_Fips_Init,
+    (rb_digest_hash_update_func_t)rb_MD5_Fips_Update,
+    (rb_digest_hash_finish_func_t)rb_MD5_Fips_Finish,
 };
-
-/* save the current state to a rb_str
- * serialize the MD5_CTX structure to a string
- */ 
-VALUE rb_MD5_Save(VALUE self) {
-  MD5_CTX *ctx;
-  char output[sizeof(MD5_CTX)];
-
-  Data_Get_Struct(self, MD5_CTX, ctx);
-
-  memcpy(output, ctx, sizeof(MD5_CTX));
- 
-  return rb_str_new(output, sizeof(MD5_CTX));
-}
-
-/* restore the current state from a rb_str */
-VALUE rb_MD5_Restore(VALUE self, VALUE str) {
-  MD5_CTX *ctx;
-
-  Data_Get_Struct(self, MD5_CTX, ctx);
-
-  memcpy(ctx, RSTRING_PTR(str), sizeof(MD5_CTX));
-
-  return self;
-}
 
 /*
  * A class for calculating message digests using the MD5
@@ -414,7 +391,7 @@ VALUE rb_MD5_Restore(VALUE self, VALUE str) {
  * RFC1321.
  */
 void
-Init_md5partial()
+Init_md5fips()
 {
   VALUE mDigest, cDigest_Base, cDigest_MD5;
 
@@ -423,10 +400,8 @@ Init_md5partial()
   mDigest = rb_path2class("Digest");
   cDigest_Base = rb_path2class("Digest::Base");
 
-  cDigest_MD5 = rb_define_class_under(mDigest, "MD5Partial", cDigest_Base);
-  rb_define_method(cDigest_MD5, "save", rb_MD5_Save, 0);
-  rb_define_method(cDigest_MD5, "restore", rb_MD5_Restore, 1);
+  cDigest_MD5 = rb_define_class_under(mDigest, "MD5Fips", cDigest_Base);
 
   rb_ivar_set(cDigest_MD5, rb_intern("metadata"),
-  Data_Wrap_Struct(rb_cObject, 0, 0, (void *)&md5));
+  Data_Wrap_Struct(rb_cObject, 0, 0, (void *)&md5_fips));
 }

@@ -43,8 +43,8 @@
 /* $RoughId: md5.h,v 1.3 2002/02/24 08:14:31 knu Exp $ */
 /* $Id: md5.h 11708 2007-02-12 23:01:19Z shyouhei $ */
 
-#ifndef MD5_INCLUDED
-#define MD5_INCLUDED
+#ifndef MD5_FIPS_INCLUDED
+#define MD5_FIPS_INCLUDED
 
 #include <ruby.h>
 #include <stdint.h>
@@ -57,18 +57,22 @@
  */
 
 /* Define the state of the MD5 Algorithm. */
-typedef struct md5_state_s {
+typedef struct md5_fips_state_s {
   uint32_t count[2];	/* message length in bits, lsw first */
   uint32_t state[4];	/* digest buffer */
   uint8_t buffer[64];	/* accumulate block */
-} MD5_CTX;
+} MD5_FIPS_CTX;
 
-void rb_MD5_Init(MD5_CTX *pms);
-void rb_MD5_Update(MD5_CTX *pms, const uint8_t *data, size_t nbytes);
-void rb_MD5_Finish(MD5_CTX *pms, uint8_t *digest);
+int rb_MD5_Fips_Init(MD5_FIPS_CTX *pms);
+void rb_MD5_Fips_Update(MD5_FIPS_CTX *pms, const uint8_t *data, size_t nbytes);
+int rb_MD5_Fips_Finish(MD5_FIPS_CTX *pms, uint8_t *digest);
 
-#define MD5_BLOCK_LENGTH		64
-#define MD5_DIGEST_LENGTH		16
-#define MD5_DIGEST_STRING_LENGTH	(MD5_DIGEST_LENGTH * 2 + 1)
+#define MD5_Fips_Init	rb_MD5_Fips_Init
+#define MD5_Fips_Update	rb_MD5_Fips_Update
+#define MD5_Fips_Finish	rb_MD5_Fips_Finish
 
-#endif /* MD5_INCLUDED */
+#define MD5_FIPS_BLOCK_LENGTH		64
+#define MD5_FIPS_DIGEST_LENGTH		16
+#define MD5_FIPS_DIGEST_STRING_LENGTH	(MD5_FIPS_DIGEST_LENGTH * 2 + 1)
+
+#endif /* MD5_FIPS_INCLUDED */

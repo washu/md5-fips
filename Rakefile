@@ -1,11 +1,11 @@
 require 'rake/clean'
 
-DLEXT=Config::MAKEFILE_CONFIG['DLEXT']
+DLEXT=RbConfig::MAKEFILE_CONFIG['DLEXT']
 CLEAN.include '**/*.o'
 CLEAN.include "**/*.#{DLEXT}"
 CLOBBER.include '**/*.log'
 CLOBBER.include '**/Makefile'
-TARGET="md5partial.#{DLEXT}"
+TARGET="md5fips.#{DLEXT}"
 
 task :default => :test
 
