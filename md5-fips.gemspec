@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name    = "md5-fips"
   s.authors = ["Sal Scotto"]
-  s.version = '0.0.1'
+  s.version = '0.0.2'
   s.date    = '2020-08-26'
   s.description = %q{Provide a MD5 impl that will execture under a fips  enabled server for non communication functions}
   s.email   = 'sal.scotto@gmail.com'
