@@ -10,4 +10,12 @@ class TestPartial < Test::Unit::TestCase
     assert_equal hash_a, hash_b
   end
 
+  def test_auto_patch
+    x = Digest::MD5Fips.enable_fips
+    if OpenSSL.fips_mode
+      assert_true x, "fips was on, but lib didnt see it"
+    else
+      assert_false x, "fips was off!"
+    end
+  end
 end
